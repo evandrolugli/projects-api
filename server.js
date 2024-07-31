@@ -78,9 +78,28 @@ app.get('/projects/technology/:name', (req, res) => {
     });
 });
 
-// List all technologies
+// List technologies
 app.get('/technologies', (req, res) => {
     const query = 'SELECT * FROM technologies ORDER BY id';
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching technologies:', err);
+            res.status(500).json({ error: 'Database query error' });
+            return;
+        }
+        res.json(results);
+    });
+});
+
+// List project_technologies
+app.get('/project_technologies', (req, res) => {
+    const query = `
+        SELECT projects.id AS projectId, projects.title as projectTitle, GROUP_CONCAT(technologies.name SEPARATOR ', ') AS technologies
+        FROM project_technologies
+        INNER JOIN projects ON project_technologies.project_id = projects.id
+        INNER JOIN technologies ON project_technologies.technology_id = technologies.id
+        GROUP BY projects.id, projects.title
+    `;
     db.query(query, (err, results) => {
         if (err) {
             console.error('Error fetching technologies:', err);
@@ -97,14 +116,14 @@ app.post('/projects', (req, res) => {
 
     // SQL query to insert a new project
     const insertProjectQuery = 'INSERT INTO projects (title, description, image, github, demo) VALUES (?, ?, ?, ?, ?)';
-    db.query(insertProjectQuery, [title, description, image, github, demo], (err, projectResult) => {
+    db.query(insertProjectQuery, [title, description, image, github, demo], (err, results) => {
         if (err) {
             console.error('Error inserting project:', err);
             res.status(500).json({ error: 'Database query error' });
             return;
         }
 
-        const projectId = projectResult.insertId;
+        const projectId = results.insertId;
 
         // Send response with the created project ID
         res.status(201).json({ message: 'Project created successfully', projectId });
@@ -210,10 +229,10 @@ app.delete('/projects/:id', (req, res) => {
 });
 
 // Delete a technology
-app.delete('/technologies/:id', (req, res) => {
-    const technologyId = req.params.id;
-    const deleteTechQuery = 'DELETE FROM technologies WHERE id = ?';
-    db.query(deleteTechQuery, [technologyId], err => {
+app.delete('/technologies/:name', (req, res) => {
+    const technologyName = req.params.name;
+    const deleteTechQuery = 'DELETE FROM technologies WHERE name = ?';
+    db.query(deleteTechQuery, [technologyName], err => {
         if (err) {
             console.error('Error deleting technology:', err);
             res.status(500).json({ error: 'Database query error' });
@@ -223,51 +242,20 @@ app.delete('/technologies/:id', (req, res) => {
     });
 });
 
-// Edit project technologies
-app.put('/project_technologies/:id', (req, res) => {
-    const projectId = req.params.id;
-    const { technologies } = req.body;
-
-    // First, delete existing technologies for the project
-    const deleteProjectTechQuery = 'DELETE FROM project_technologies WHERE project_id = ?';
-    db.query(deleteProjectTechQuery, [projectId], err => {
+// Delete technology from project_technologies
+app.delete('/project_technologies', (req, res) => {
+    const { projectId, technologyId } = req.body;
+    console.log(projectId)
+    console.log(technologyId)
+    const deleteProjTechQuery = 'DELETE FROM project_technologies WHERE project_id = ? AND technology_id = ?';
+    
+    db.query(deleteProjTechQuery, [projectId, technologyId], err => {
         if (err) {
-            console.error('Error deleting project technologies:', err);
+            console.error('Error deleting technology:', err);
             res.status(500).json({ error: 'Database query error' });
             return;
         }
-
-        // Then, insert new technologies
-        const technologyNames = technologies.map(tech => [tech]);
-        const insertTechQuery = 'INSERT IGNORE INTO technologies (name) VALUES ?';
-        db.query(insertTechQuery, [technologyNames], err => {
-            if (err) {
-                console.error('Error inserting technologies:', err);
-                res.status(500).json({ error: 'Database query error' });
-                return;
-            }
-
-            const getTechIdsQuery = 'SELECT id FROM technologies WHERE name IN (?)';
-            db.query(getTechIdsQuery, [technologies], (err, techResults) => {
-                if (err) {
-                    console.error('Error fetching technology IDs:', err);
-                    res.status(500).json({ error: 'Database query error' });
-                    return;
-                }
-
-                const projectTechEntries = techResults.map(tech => [projectId, tech.id]);
-                const insertProjectTechQuery = 'INSERT INTO project_technologies (project_id, technology_id) VALUES ?';
-                db.query(insertProjectTechQuery, [projectTechEntries], err => {
-                    if (err) {
-                        console.error('Error linking project and technologies:', err);
-                        res.status(500).json({ error: 'Database query error' });
-                        return;
-                    }
-
-                    res.status(200).json({ message: 'Project technologies updated successfully' });
-                });
-            });
-        });
+        res.status(200).json({ message: 'Technology deleted successfully' });
     });
 });
 

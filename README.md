@@ -7,5 +7,6 @@
 - run: npm start / npm run dev
 
 ## To-do
-- edit project technologies
+- fix delete technology from project_technologies
 - documentation, swagger
+- deploy in production
