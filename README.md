@@ -6,6 +6,6 @@
 ## Coding
 - run: npm start / npm run dev
 
-## Do-do
+## To-do
 - edit project technologies
 - documentation, swagger
