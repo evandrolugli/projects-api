@@ -1,10 +1,11 @@
-## technology
+## Technology
 - node/express
 - npm (package manager)
+- mysql2
 
-## coding
+## Coding
 - run: npm start / npm run dev
 
-## to-do
-- 
-
+## Do-do
+- edit project technologies
+- documentation, swagger
