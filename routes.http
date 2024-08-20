@@ -1,0 +1,25 @@
+
+// List Projects
+GET http://localhost:3000/projects
+
+###
+
+// List projects by projectID
+GET http://localhost:3000/projects/1
+
+###
+
+// List projects by technology
+GET http://localhost:3000/projects/technology/react
+
+###
+
+// List technologies
+GET http://localhost:3000/technologies
+
+###
+
+// List project_technologies
+GET http://localhost:3000/project_technologies
+
+###
